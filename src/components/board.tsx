@@ -21,7 +21,15 @@ type Box = {
     colouredBy: null | number
 }
 
-type BoardEl = Line | Box
+type Filler = {
+    id: number
+    type: 'filler-ball'
+    row: number
+    col: number
+    colouredBy: null | number
+}
+
+type BoardEl = Line | Box | Filler
 
 type Board = BoardEl[][]
 
@@ -35,7 +43,7 @@ export function Board({ size }: { size: number }) {
     const players = [
         { id: 0, name: 'Player 1', colour: 'red', score: 0 },
         { id: 1, name: 'Player 2', colour: 'blue', score: 0 },
-        { id: 2, name: 'Player 3', colour: 'green', score: 0 },
+        // { id: 2, name: 'Player 3', colour: 'green', score: 0 },
     ]
     const [currentPlayer, setCurrentPlayer] = useState(players[0])
     const gridSize = size * 2 + 1
@@ -48,9 +56,11 @@ export function Board({ size }: { size: number }) {
             if (row % 2 === 0) {
                 cols = size
             }
-            for (let col = 0; col < cols; col++) {
+            for (let col = 0; col < gridSize; col++) {
                 if (row % 2 === 0) {
-                    grid[row][col] = { id: row + col, type: 'line', dir: 'horizontal', row, col, colouredBy: null, isHovered: false }
+                    if (col % 2 !== 0) {
+                        grid[row][col] = { id: row + col, type: 'line', dir: 'horizontal', row, col, colouredBy: null, isHovered: false }
+                    } else grid[row][col] = { id: row + col, type: 'filler-ball', row, col, colouredBy: null }
                 } else {
                     if (col % 2 === 0) {
                         grid[row][col] = { id: row + col, type: 'line', dir: 'vertical', row, col, colouredBy: null, isHovered: false }
@@ -69,18 +79,73 @@ export function Board({ size }: { size: number }) {
         const row = Number(line.getAttribute('data-row'))
         const col = Number(line.getAttribute('data-col'))
         const type = line.getAttribute('data-type')
-        return { row, col, type }
+        const dir = line.getAttribute('data-dir')
+        return { row, col, type, dir }
     }
 
     function handleLineClick(e: React.MouseEvent<HTMLDivElement>) {
         if (!board) return
-        const { row, col } = getElData(e.target)
+        const { row, col, dir } = getElData(e.target)
         if (board[row][col].colouredBy !== null) return
         const newBoard = [...board]
         newBoard[row][col].colouredBy = currentPlayer.id
         ;(newBoard[row][col] as Line).isHovered = false
         setBoard(newBoard)
+        const boxes = checkBoxes(row, col, dir!)
+        console.log(2222222, boxes)
+        if (boxes !== undefined && boxes.length !== 0) {
+            for (let box of boxes) {
+                newBoard[box!.row][box!.col].colouredBy = currentPlayer.id
+            }
+        }
         setCurrentPlayer(prev => players[(prev.id + 1) % players.length])
+    }
+
+    function getBoxOutlines(row: number, col: number) {
+        if (!board) return
+        const leftLine = board[row][col - 1]
+        const rightLine = board[row][col + 1]
+        const topLine = board[row - 1][col]
+        const bottomLine = board[row + 1][col]
+
+        return [leftLine, rightLine, topLine, bottomLine]
+    }
+
+    function isBoxOwner(box: BoardEl | undefined) {
+        if (box === undefined) return false
+        const lines = getBoxOutlines(box.row, box.col)!
+        console.log(55, box, lines)
+        for (let line of lines) {
+            if (!!line && line.colouredBy !== currentPlayer.id) return false
+        }
+
+        return true
+    }
+
+    function checkBoxes(row: number, col: number, dir: string) {
+        if (!board) return
+        let box1: BoardEl | undefined, box2: BoardEl | undefined
+
+        if (dir === 'vertical') {
+            if (col - 1 >= 0) {
+                box1 = board[row][col - 1]
+            }
+            if (col + 1 < board[0].length) {
+                box2 = board[row][col + 1]
+            }
+        } else {
+            if (row - 1 >= 0) {
+                box1 = board[row - 1][col]
+            }
+            if (row + 1 < board.length) {
+                box2 = board[row + 1][col]
+            }
+        }
+
+        const boxes = []
+        if (isBoxOwner(box1)) boxes.push(box1)
+        if (isBoxOwner(box2)) boxes.push(box2)
+        return boxes
     }
 
     function handleLineHoverEnter(e: React.MouseEvent<HTMLDivElement>) {
@@ -108,30 +173,33 @@ export function Board({ size }: { size: number }) {
                 <div>
                     {!!board &&
                         board.map((row, i) => (
-                            <div key={row[0].id} className='grid' style={{ gridTemplateColumns: `repeat(${size}, ${lineThickness} 1fr) ${lineThickness}` }}>
-                                {row.map((col: Line | Box) => {
-                                    return i % 2 === 0 && !col ? null : (
+                            <div key={i} className='grid' style={{ gridTemplateColumns: `repeat(${size}, ${lineThickness} 1fr) ${lineThickness}` }}>
+                                {row.map((col: Line | Box | Filler) => {
+                                    return (
                                         <>
                                             <React.Fragment key={col.id}>
-                                                {i % 2 === 0 && col.col < size ? <div className='filler-ball self-center' /> : null}
-                                                <div
-                                                    data-type={col.type}
-                                                    data-row={col.row}
-                                                    data-col={col.col}
-                                                    onClick={isLine(col) ? handleLineClick : () => undefined}
-                                                    className={`${col.type} ${isLine(col) ? col.dir : ''}`}
-                                                    style={{
-                                                        backgroundColor: col.colouredBy === null ? (isLine(col) && col.isHovered ? currentPlayer.colour : 'white') : players[col.colouredBy].colour,
-                                                        opacity: isLine(col) && col.isHovered ? 0.15 : 1,
-                                                    }}
-                                                    onMouseEnter={isLine(col) ? handleLineHoverEnter : () => undefined}
-                                                    onMouseLeave={isLine(col) ? handleLineHoverLeave : () => undefined}
-                                                />
+                                                {col.type === 'filler-ball' ? (
+                                                    <div className='filler-ball self-center' />
+                                                ) : (
+                                                    <div
+                                                        data-type={col.type}
+                                                        data-dir={isLine(col) ? col.dir : null}
+                                                        data-row={col.row}
+                                                        data-col={col.col}
+                                                        onClick={isLine(col) ? handleLineClick : () => undefined}
+                                                        className={`${col.type} ${isLine(col) ? col.dir : 'm-[1px]'}`}
+                                                        style={{
+                                                            backgroundColor: col.colouredBy === null ? (isLine(col) && col.isHovered ? currentPlayer.colour : 'white') : players[col.colouredBy].colour,
+                                                            opacity: isLine(col) && col.isHovered ? 0.15 : 1,
+                                                        }}
+                                                        onMouseEnter={isLine(col) ? handleLineHoverEnter : () => undefined}
+                                                        onMouseLeave={isLine(col) ? handleLineHoverLeave : () => undefined}
+                                                    />
+                                                )}
                                             </React.Fragment>
                                         </>
                                     )
                                 })}
-                                {i % 2 === 0 ? <div className='filler-ball self-center' /> : null}
                             </div>
                         ))}
                 </div>
