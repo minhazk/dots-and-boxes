@@ -40,6 +40,10 @@ function isLine(el: BoardEl): el is Line {
 export function Board({ size }: { size: number }) {
     const [board, setBoard] = useState<Board>()
 
+    useEffect(() => {
+        genBoard()
+    }, [])
+
     const players = [
         { id: 0, name: 'Player 1', colour: 'red', score: 0 },
         { id: 1, name: 'Player 2', colour: 'blue', score: 0 },
@@ -212,7 +216,6 @@ export function Board({ size }: { size: number }) {
                     </div>
                 ))}
             </div>
-            <button onClick={genBoard}>Create board</button>
         </div>
     )
 }
