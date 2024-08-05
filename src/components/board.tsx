@@ -33,9 +33,9 @@ export function Board({ size }: { size: number }) {
     const [board, setBoard] = useState<Board>()
 
     const players = [
-        { id: 0, name: 'Player 1', colour: 'red' },
-        { id: 1, name: 'Player 2', colour: 'blue' },
-        { id: 2, name: 'Player 3', colour: 'green' },
+        { id: 0, name: 'Player 1', colour: 'red', score: 0 },
+        { id: 1, name: 'Player 2', colour: 'blue', score: 0 },
+        { id: 2, name: 'Player 3', colour: 'green', score: 0 },
     ]
     const [currentPlayer, setCurrentPlayer] = useState(players[0])
     const gridSize = size * 2 + 1
@@ -74,7 +74,7 @@ export function Board({ size }: { size: number }) {
 
     function handleLineClick(e: React.MouseEvent<HTMLDivElement>) {
         if (!board) return
-        const { row, col, type } = getElData(e.target)
+        const { row, col } = getElData(e.target)
         if (board[row][col].colouredBy !== null) return
         const newBoard = [...board]
         newBoard[row][col].colouredBy = currentPlayer.id
@@ -104,7 +104,7 @@ export function Board({ size }: { size: number }) {
     return (
         <div>
             <h1 className='text-lg mb-4 text-center'>{currentPlayer.name}&apos;s turn</h1>
-            <div className='border p-12 w-[70vmin]'>
+            <div className='border p-16 w-[70vmin]'>
                 <div>
                     {!!board &&
                         board.map((row, i) => (
@@ -135,6 +135,14 @@ export function Board({ size }: { size: number }) {
                             </div>
                         ))}
                 </div>
+            </div>
+            <div className='grid mt-5' style={{ gridTemplateColumns: `repeat(${players.length},1fr` }}>
+                {players.map(p => (
+                    <div key={p.id} className='flex flex-col text-center text-sm gap-2'>
+                        <p className='text-bold'>{p.name}</p>
+                        <p>{p.score}</p>
+                    </div>
+                ))}
             </div>
             <button onClick={genBoard}>Create board</button>
         </div>
