@@ -96,7 +96,6 @@ export function Board({ size }: { size: number }) {
         ;(newBoard[row][col] as Line).isHovered = false
         setBoard(newBoard)
         const boxes = checkBoxes(row, col, dir!)
-        console.log(2222222, boxes)
         if (boxes !== undefined && boxes.length !== 0) {
             for (let box of boxes) {
                 newBoard[box!.row][box!.col].colouredBy = currentPlayer.id
@@ -118,12 +117,8 @@ export function Board({ size }: { size: number }) {
     function isBoxOwner(box: BoardEl | undefined) {
         if (box === undefined) return false
         const lines = getBoxOutlines(box.row, box.col)!
-        console.log(55, box, lines)
-        for (let line of lines) {
-            if (!!line && line.colouredBy !== currentPlayer.id) return false
-        }
-
-        return true
+        console.log(5, lines)
+        return lines.every(line => line.colouredBy !== null)
     }
 
     function checkBoxes(row: number, col: number, dir: string) {
