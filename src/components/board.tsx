@@ -117,7 +117,6 @@ export function Board({ size }: { size: number }) {
     function isBoxOwner(box: BoardEl | undefined) {
         if (box === undefined) return false
         const lines = getBoxOutlines(box.row, box.col)!
-        console.log(5, lines)
         return lines.every(line => line.colouredBy !== null)
     }
 
@@ -189,7 +188,7 @@ export function Board({ size }: { size: number }) {
                                                         className={`${col.type} ${isLine(col) ? col.dir : 'm-[1px]'}`}
                                                         style={{
                                                             backgroundColor: col.colouredBy === null ? (isLine(col) && col.isHovered ? currentPlayer.colour : 'white') : players[col.colouredBy].colour,
-                                                            opacity: isLine(col) && col.isHovered ? 0.15 : 1,
+                                                            opacity: isLine(col) && col.isHovered ? 0.15 : !isLine(col) ? 0.6 : 1,
                                                         }}
                                                         onMouseEnter={isLine(col) ? handleLineHoverEnter : () => undefined}
                                                         onMouseLeave={isLine(col) ? handleLineHoverLeave : () => undefined}
